@@ -1,3 +1,3 @@
 findlast([H],[], H).
-findlast([H|T],[H|Rest],LastLine):-
-  findlast(T, Rest,LastLine).
+findlast([H|T],[H|Rest],E):-
+  findlast(T, Rest, E).
