@@ -1,171 +1,158 @@
-% 
+/**
+The verify predicate takes an input file and 
+stores the premises, the goal we wish to prove, and
+the proof lines into three variables. It then sends these 3
+variables to the startpoint of the proof checking, valid_proof.
+*/
 verify(InputFileName) :- see(InputFileName),
 read(Prems), read(Goal), read(Proof),
-seen,
-valid_proof(Prems, Goal, Proof).
+seen, valid_proof(Prems, Goal, Proof).
 
+
+/**
+Predicate for updating list of proofs checked
+*/
+addList(List1, Element, [Element|List1]).
+
+
+updateList([Element|List1], Element).
+updateList(List1, Element):- !,
+updateList([Element|List1], Element),!.
+
+
+/**
+A predicate which copies list 1 to list 2
+*/
+copyList([],[]).
+copyList([H|T1],[H|T2]) :- copyList(T1,T2).
+
+/**
+starts by checking if the last line of the
+proof is the same as the goal. Essentially it checks that
+the proof somehow ends up with the desired result. Also checks that the proof sequence is correct.
+*/
 valid_proof(Prems, Goal, Proof):-
-  findlast(Proof,Rest,LastLine),
-  valid_goal(Goal, LastLine),
-  %reverse(Proof, Reversed),
-  valid_proof2(Prems,Proof).
+check_goal(Goal, Proof), check_proof(Proof, []).
 
-valid_proof2(Prems, []) :-
-  write('yes\n').
+/**
+Check that the goal is the same as the last line of proofs.
+*/
+check_goal(G, Proof):-
+findLastProof(Proof, X), G = X, !.
 
-valid_proof2(Prems, Proof) :-
-  findlast(Proof,Rest,LastLine),
-  find_box(Prems,Proof, LastLine),
-  valid_proof2(Prems, Rest).
+/**
+Iterate through proof until last line is reached, return the proof sequence in X.
+*/
+findLastProof([[_, Last, _]|[]], Last).
+findLastProof([First|Tail], X):-
+findLastProof(Tail, X).
 
-% bara välja denna om det är en lista av fler än en lista
-find_box(Prems, Proof, [[L1,F1,_Rule]| [Box|Tail]]) :-
-  findlast([[L1,F1,_Rule]| [Box|Tail]], Rest, LastLine),
-  append([[L1,F1,_Rule]| [Box|Tail] ], Proof, Both),
-  valid_line(Prems, Both, LastLine),
-  find_box(Prems, Proof, Rest).
+/**
+Iterate through each line of proofs until we reach end, checking each line as we pass through it and
+adding each checked line of proof to a list we will use to check our following lines against.
+*/
+check_proof([], _).
+check_proof([H|T], CheckedProof):-
+check_line(H, CheckedProof), addList(CheckedProof, H, NewCheckedProof), check_proof(T, NewCheckedProof).
 
-% Checking assumption
-find_box(Prems, Proof, [[_LineNumber, _Formula, assumption]]):-
-  write('assumption OK! \n').
 
- % bara välja om lista av tre element
-find_box(Prems, Proof, [LineNumber, Formula, Rule]):-
-  valid_line(Prems, Proof, [LineNumber, Formula, Rule]).
 
-% Checking goal
-valid_goal(Goal, [_LineNumber, Formula, _Rule]):-
-  Formula == Goal,
-  write('Goal OK! \n').
+/**
+CHECKING THE VALIDITY OF EACH LINE (EXCLUDING BOXES)
+*/
 
-% Find the last line in proof
-findlast([Rest],[],Rest).
-findlast([FirstLine|Rest],[FirstLine|Rest2],LastLine):-
-  findlast(Rest,Rest2,LastLine).
 
-% Checking premises
-valid_line(Prems, Proof, [_LineNumber, Formula, premise]) :-
-  member(Formula, Prems),
-  write('premise uppfyllt! \n ').
+/**
+If the line of proof check_line is called with is a premise, we check that it is a member of the list of premises.
+*/
+check_line([_, P, premise],_):-!,
+member(P, Prems), !.
 
-% And elimination 1
-valid_line(_Prems , Proof,  [_LineNumber, Formula, andel1(Line)]) :-
-  member([Line, and(Formula, _), _], Proof),
-  write('andel1 uppfyllt! \n').
 
-% And elimination 2
-valid_line(_Prems , Proof, [_LineNumber, Formula, andel2(Line)]) :-
-  member([Line, and(_, Formula), _], Proof),
-  write('andel2 uppfyllt! \n').
+/**
+If the line of proof check_line is called with is derived using and elimination, we check that the derived element
+exists anded with some other element on the given line in our already checked lines.
+*/
+check_line([_, P, andel1(Line)], CheckedProof):-!,
+member([Line, and(P, _), _], CheckedProof), !.
 
- % Implication elimination
-valid_line(_Prems , Proof, [_LineNumber, Formula, impel(Line, Line2)]) :-
-  member([Line, Formula2, _], Proof),
-  member([Line2, imp(Formula2,Formula), _], Proof),
-  write('impel uppfyllt! \n').
+check_line([_, P, andel2(Line)], CheckedProof):-!,
+member([Line, and(_, P), _], CheckedProof), !.
 
-% And introduction
-valid_line(_Prems, Proof, [LineNumber, Formula, andint(Line1, Line2)]) :-
-  member([Line1, Formula1, _], Proof),
-  member([Line2, Formula2, _], Proof),
-  member([LineNumber, and(Formula1, Formula2), _], Proof),
-  write('andint uppfyllt! \n').
+check_line([_, P, copy(Line)], CheckedProof):-!,
+member([Line, P, _], CheckedProof), !.
 
-% Or introduction 1
-valid_line(_Prems, Proof, [_LineNumber, Formula, orint1(Line)]) :-
-  member([Line, or(Formula, _), _], Proof),
-  write('orint1 uppfyllt! \n').
+check_line([_, and(X, Y), andint(Line1, Line2)], CheckedProof):-!,
+member([Line1, X, _], CheckedProof), member([Line2, Y, _], CheckedProof), write("andint performed").
 
- % Or introduction 2
-valid_line(_Prems, Proof, [_LineNumber, Formula, orint2(Line)]) :-
-  member([Line, or(_, Formula), _], Proof),
-  write('orint2 uppfyllt! \n').
+check_line([_, or(X, _), orint1(Line)], CheckedProof):-!,
+member([Line, X, _], CheckedProof), !.
 
-% Contradiction eleminiation
-valid_line(_Prems, Proof, [_LineNumber, _Formula, contel(Line)]) :-
-  member([Line, cont, _], Proof),
-  write('contel uppfyllt! \n').
+check_line([_, or(_, Y), orint2(Line)], CheckedProof):- !,
+member([Line, Y, _], CheckedProof), !.
 
-% Negation eleminiation
-valid_line(_Prems, Proof, [LineNumber, _Formula, negel(Line, Line2)]) :-
-  member([Line, Formula2,_], Proof),
-  member([Line2, neg(Formula2),_], Proof),
-  member([LineNumber, cont, _], Proof),
-  write('negel uppfyllt! \n').
+check_line([_, P, impel(Line1, Line2)], CheckedProof):-!,
+member([Line1, P1, _], CheckedProof),!, member([Line2, imp(P1, P), _], CheckedProof),!.
 
-% Double Negation eleminiation
-valid_line(_Prems, Proof, [_LineNumber, Formula, negnegel(Line)]) :-
-  member([Line, neg(neg(Formula)), _], Proof),
-  write('negnegel uppfyllt! \n').
+check_line([_, neg(neg(P)), negnegint(Line)], CheckedProof):-!,
+member([Line, P, _], CheckedProof), !.
 
-% copy
-valid_line(_Prems, Proof, [LineNumber, _Formula, copy(Line)]) :-
-  member([Line, Formula2 ,_], Proof),
-  member([LineNumber, Formula2,_], Proof).
+check_line([_, P, negnegel(Line)], CheckedProof):-!,
+member([Line, neg(neg(P)), _], CheckedProof),!.
 
-% MT
-valid_line(_Prems , Proof, [LineNumber, _Formula, mt(Line, Line2)]) :-
-  member([Line2, neg(Formula2), _], Proof),
-  member([Line, imp(Formula1,Formula2), _], Proof),
-  member([LineNumber, neg(Formula1), _], Proof),
-  write('mt uppfyllt! \n').
+check_line([_, neg(P), mt(Line1, Line2)], CheckedProof):-!,
+member([Line1, imp(P, Q), _], CheckedProof), !, member([Line2, neg(Q), _], CheckedProof), !.
 
- % Double Negation introduction
-valid_line(_Prems , Proof, [LineNumber, Formula, negnegint(Line)]) :-
-  member([Line, Formula2, _], Proof),
-  member([LineNumber, neg(neg(Formula2)), _], Proof),
-  write('negnegint uppfyllt! \n').
+check_line([_, or(P, neg(P)), lem], CheckedProof):-!,
+true, !.
 
- % LEM
-valid_line(_Prems , Proof, [LineNumber, Formula, lem]) :-
-  member([LineNumber, or(_X,neg(_X)), _], Proof),
-  write('lem uppfyllt! \n').
+check_line([[Startline, Assumption, assumption]|Restofbox], CheckedProof):-!,
+copyList(CheckedProof, TemporaryCheckedProof), updateList(CheckedProof, [Startline, Assumption, assumption]), check_box([[Startline, Assumption, assumption]|Restofbox], TemporaryCheckedProof, CheckedProof).
 
- % Implication introduction
-valid_line(_Prems , Proof, [_LineNumber, Formula, impint(Line1, Line2)]) :-
-  findlast(Proof,Rest,LastLine),
-  findlast(Rest,R,[[L1,F1,_Rule]| Box ]),
-  L1 == Line1,
-  findlast(Box,R1,[L2,F2,_Rule2]),
-  L2 == Line2,
-  Formula == imp(F1, F2),
-  write('impint uppfyllt! \n').
+check_line([_, P, contel(Line)], CheckedProof):-!,
+member([Line, cont, _], CheckedProof), !.
 
-% Negation introduction
-valid_line(_Prems , Proof, [LineNumber, Formula, negint(Line1, Line2)]) :-
-  findlast(Proof,Rest,LastLine),
-  findlast(Rest,R,[[Line1,F1,_Rule]| Box ]),
-  %L1 == Line1,
-  findlast(Box,R1,[Line2,cont,_Rule2]),
-  %L2 == Line2,
-  %F2 == cont,
-  Formula == neg(F1),
-  write('negint uppfyllt! \n').
+check_line([_, cont, negel(Line1, Line2)], CheckedProof):-!,
+member([Line1, P, _], CheckedProof), member([Line2, neg(P), _], CheckedProof), !.
 
-  % PBC
-valid_line(_Prems , Proof, [LineNumber, Formula, pbc(Line1, Line2)]) :-
-  findlast(Proof,Rest,LastLine),
-  findlast(Rest,R,[[L1,neg(F1),_Rule]| Box ]),
-  L1 == Line1,
-  findlast(Box,R1,[L2,F2,_Rule2]),
-  L2 == Line2,
-  F2 == cont,
-  Formula == F1,
-  write('pbc uppfyllt! \n').
+/**
+BOX TYPE SHIT BELOW
+*/
 
-  % Or eleminiation
-valid_line(_Prems , Proof, [LineNumber, Formula, orel(Line1, Line2, Line3, Line4, Line5)]) :-
-  member([[Line4, F1, _Rule]| ])
-  findlast(Proof,Rest,LastLine),
-  findlast(Rest,R4,[[L4, F4,_Rule4]| Box ]),
-  L4 == Line4,
-  findlast(Box,R5,[L5,F5,_Rule5]),
-  L5 == Line5,
-  F5 == Formula,
-  nth1(Line2, Proof, [[L2, F2,_Rule2]| Box2 ]),
-  L2 == Line2,
-  findlast(Box2,R3,[L3,F3,_Rule3]),
-  L3 == Line3,
-  F3 == Formula,
-  member([Line1, or(F2,F4), _], Proof),
-  write('orel uppfyllt! \n').
+check_line([_, imp(P, Q), impint(Line1, Line2)], CheckedProof):-!,
+findBox(Line1, Line2, CheckedProof, [Line1, P, assumption], [Line2, Q, _]).
+
+
+check_line([_, Assumption, assumption], CheckedProof):-!,
+true.
+
+check_line([_, P, pbc(Line1, Line2)], CheckedProof):-!,
+findBox(Line1, Line2, CheckedProof, [Line1, neg(P), assumption], [Line2, cont, _]).
+
+check_line([_, X, orel(Line1, Line2, Line3, Line4, Line5)], CheckedProof):-!,
+member([Line1, or(P, Q), _], CheckedProof), findBox(Line2, Line3, CheckedProof, [Line2, P, assumption], [Line3, X, _]),
+findBox(Line4, Line5, CheckedProof, [Line4, Q, assumption], [Line5, X, _]).
+
+check_line([_, P, negint(Line1, Line2)], CheckedProof):-!,
+findBox(Line1, Line2, CheckedProof, [Line1, neg(P), assumption], [Line2, cont, _]).
+
+
+/**
+check the validity line by line inside the box by sending each line to check_line. After we are done, the whole box is added to checked proof.
+*/
+check_box([], List, List2):- true.
+check_box([Head|[]], TemporaryCheckedProof, [H|CheckedProof]).
+check_box([H|T], TemporaryCheckedProof, CheckedProof):- !,
+check_line(H, TemporaryCheckedProof), addList(TemporaryCheckedProof, H, NewCheckedProof), check_box(T, NewCheckedProof, CheckedProof).
+
+findBox(Line1, Line2, [[Line1, Assumption, assumption]|Tail], [Line1, Assumption, assumption], Lastline).
+findBox(Line1, Line2, [H|T], Firstline, Lastline):- !,
+getLast(Line2, Tail, Lastline),!, findBox(Line1, Line2, [[Line1, Assumption, assumption]|Tail], [Line1, Assumption, assumption], Lastline), !.
+
+getLast(Line2, [Head|[]], Head).
+getLast(Line2, [H|T], Lastline):-
+getLast(Line2, T, Lastline).
+
+
+
+
