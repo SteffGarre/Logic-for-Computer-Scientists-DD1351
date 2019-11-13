@@ -1,6 +1,6 @@
-% En lista av premisser (v¨anstra delen av sekventen.)
+% En lista av premisser (vänstra delen av sekventen.)
 [neg(neg(imp(p, neg(p))))].
-% M˚alet (h¨ogra delen av sekventen).
+% Målet (högra delen av sekventen).
 neg(p).
 % Beviset
 [
