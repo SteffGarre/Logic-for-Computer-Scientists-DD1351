@@ -1,17 +1,17 @@
-/**
-The verify predicate takes an input file and 
-stores the premises, the goal we wish to prove, and
-the proof lines into three variables. It then sends these 3
-variables to the startpoint of the proof checking, valid_proof.
+/*
+Predikatet verify tar en inputfil och sparar filens premisser, mål och beviset i
+variablerna Prems, Goal och Proof. Dessa tre variabler skickas sedan till predikatet valid_proof
+som påbörjar kontrollen.
 */
+
 verify(InputFileName) :- see(InputFileName),
 read(Prems), read(Goal), read(Proof),
 seen, valid_proof(Prems, Goal, Proof).
 
 
-/**
-Predicate for updating list of proofs checked
-*/
+
+/*Predikat för att uppdatera listan med kontrollerade rader */
+
 addList(List1, Element, [Element|List1]).
 
 
@@ -21,57 +21,54 @@ updateList([Element|List1], Element),!.
 
 
 /**
-A predicate which copies list 1 to list 2
+Predikat som kopierar lista 1 till lista 2
 */
 copyList([],[]).
 copyList([H|T1],[H|T2]) :- copyList(T1,T2).
 
 /**
-starts by checking if the last line of the
-proof is the same as the goal. Essentially it checks that
-the proof somehow ends up with the desired result. Also checks that the proof sequence is correct.
+Kontrollerar om sista raden av beviset stämmer överens med målet. 
+Samt kontrollerar att beviset är korrekt.
 */
 valid_proof(Prems, Goal, Proof):-
 check_goal(Goal, Proof), check_proof(Proof, []).
 
 /**
-Check that the goal is the same as the last line of proofs.
+Kontrollerar om sista raden av beviset stämmer överens med målet. 
 */
 check_goal(G, Proof):-
 findLastProof(Proof, X), G = X, !.
 
 /**
-Iterate through proof until last line is reached, return the proof sequence in X.
+Itererar igenom beviset, returnerar resultatet i X.
 */
 findLastProof([[_, Last, _]|[]], Last).
 findLastProof([First|Tail], X):-
 findLastProof(Tail, X).
 
 /**
-Iterate through each line of proofs until we reach end, checking each line as we pass through it and
-adding each checked line of proof to a list we will use to check our following lines against.
+Itererar igenom beviset rad för rad. Kontrollerar varje rad med check_line och sparar varje rad till en lista
+som kan användas för att kontrollera kommande rader genteemot.
 */
 check_proof([], _).
 check_proof([H|T], CheckedProof):-
 check_line(H, CheckedProof), addList(CheckedProof, H, NewCheckedProof), check_proof(T, NewCheckedProof).
 
-
-
 /**
-CHECKING THE VALIDITY OF EACH LINE (EXCLUDING BOXES)
+Delen av programmet som kontrollerar validiteten av varje rad.
 */
 
-
 /**
-If the line of proof check_line is called with is a premise, we check that it is a member of the list of premises.
+Om check_line anropas med en rad som innehåller premisser kontrolleras att denna premiss finns med i listan av premisser som gavs input.
 */
 check_line([_, P, premise],_):-!,
 member(P, Prems), !.
 
 
 /**
-If the line of proof check_line is called with is derived using and elimination, we check that the derived element
-exists anded with some other element on the given line in our already checked lines.
+Om check_line anropas med en rad som innehåller användning av en godtycklig regel exempelvis andel kontrolleras att det
+eliminerade elementet finns bundet genom konjunktion till ett annat element i listan av tidigare kontrollerade rader.
+Raden mönstermatchas till rätt regel.
 */
 check_line([_, P, andel1(Line)], CheckedProof):-!,
 member([Line, and(P, _), _], CheckedProof), !.
@@ -116,7 +113,7 @@ check_line([_, cont, negel(Line1, Line2)], CheckedProof):-!,
 member([Line1, P, _], CheckedProof), member([Line2, neg(P), _], CheckedProof), !.
 
 /**
-BOX TYPE SHIT BELOW
+Boxhantering
 */
 
 check_line([_, imp(P, Q), impint(Line1, Line2)], CheckedProof):-!,
@@ -138,7 +135,7 @@ findBox(Line1, Line2, CheckedProof, [Line1, neg(P), assumption], [Line2, cont, _
 
 
 /**
-check the validity line by line inside the box by sending each line to check_line. After we are done, the whole box is added to checked proof.
+Kontrollera validiteten rad för rad inuti boxen genom att skicka varje rad till check_line. När detta är klart adderas hela boxen till listan med kontrollerade rader.
 */
 check_box([], List, List2):- true.
 check_box([Head|[]], TemporaryCheckedProof, [H|CheckedProof]).
@@ -149,10 +146,10 @@ findBox(Line1, Line2, [[Line1, Assumption, assumption]|Tail], [Line1, Assumption
 findBox(Line1, Line2, [H|T], Firstline, Lastline):- !,
 getLast(Line2, Tail, Lastline),!, findBox(Line1, Line2, [[Line1, Assumption, assumption]|Tail], [Line1, Assumption, assumption], Lastline), !.
 
+/*
+Hitta sista elementet i en lista
+*/
+
 getLast(Line2, [Head|[]], Head).
 getLast(Line2, [H|T], Lastline):-
 getLast(Line2, T, Lastline).
-
-
-
-
