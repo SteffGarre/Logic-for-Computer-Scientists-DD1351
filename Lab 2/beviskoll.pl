@@ -33,6 +33,7 @@ Samt kontrollerar att beviset är korrekt.
 valid_proof(Prems, Goal, Proof):-
 check_goal(Goal, Proof), check_proof(Proof, []).
 
+
 /**
 Kontrollerar om sista raden av beviset stämmer överens med målet. 
 */
