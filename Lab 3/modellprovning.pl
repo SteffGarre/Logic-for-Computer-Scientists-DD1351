@@ -5,17 +5,17 @@ verify(Input) :-
 	see(Input), read(T), read(L), read(S), read(F), seen,
 	check(T, L, S, [], F).
 
-% check(T, L, S, U, F)
+% check(T, L, S, visited, F)
 % T - The transitions in form of adjacency lists
 % L - The labeling
 % S - Current state
-% U - Currently recorded states
+% visited - Currently recorded states
 % F - CTL Formula to check.
 %
 % Should evaluate to true iff the sequent below is valid.
 %
 % (T,L), S |- F
-% U
+% visited
 % To execute: consult(’your_file.pl’). verify(’input.txt’).
 
 % Literals - check for the state S and its axiom list that is does contain X
@@ -45,43 +45,43 @@ check(T, L, S, [], ax(F)) :-
 
 % AG F - F is satisfied in every future state
 % Success if loop is found
-check(T, L, S, U, ag(F)):-
-	member(S, U).
-check(T, L, S, U, ag(F)) :-
-	\+ member(S, U),
+check(T, L, S, visited, ag(F)):-
+	member(S, visited).
+check(T, L, S, visited, ag(F)) :-
+	\+ member(S, visited),
 	check(T, L, S, [], F), % check if true in current state S
 	member([S, Z], T), % Fetch list Z of neighbors to S from tranistions T
-	check_all(T, L, Z, [S|U], F, ag(F)). % Check for all neighbours Z, Add S to recorded states U
+	check_all(T, L, Z, [S|visited], F, ag(F)). % Check for all neighbours Z, Add S to recorded states visited
 
 % AF F - all paths will satisfy F eventually
 % Fail if loop found
-check(T, L, S, U, af(F)):-
-	\+ member(S, U),
+check(T, L, S, visited, af(F)):-
+	\+ member(S, visited),
 	check(T, L, S, [], F).
 
-check(T, L, S, U, af(F)) :- % check if true in current state S
-	\+ member(S, U),
+check(T, L, S, visited, af(F)) :- % check if true in current state S
+	\+ member(S, visited),
 	member([S, Z], T), % Fetch list Z of neighbors to S from tranistions T
-	check_all(T, L, Z, [S|U], F, af(F)). % Check for all neighbours Z, Add S to recorded states U
+	check_all(T, L, Z, [S|visited], F, af(F)). % Check for all neighbours Z, Add S to recorded states visited
 
 % EG - check if some path will always satisfy F
-check(T, L, S, U, eg(F)):-
-	member(S, U).
-check(T, L, S, U, eg(F)) :-
-	\+ member(S, U),
+check(T, L, S, visited, eg(F)):-
+	member(S, visited).
+check(T, L, S, visited, eg(F)) :-
+	\+ member(S, visited),
 	check(T, L, S, [], F), % check if true in current state S
 	member([S, Z], T), % Fetch list Z of neighbors to S from tranistions T
-	check_exist(T, L, Z, [S|U], F, eg(F)). % Check for all neighbours Z, Add S to recorded states U
+	check_exist(T, L, Z, [S|visited], F, eg(F)). % Check for all neighbours Z, Add S to recorded states visited
 	
 
 % EF F - some path will satisfy F eventually
-check(T, L, S, U, ef(F)):-
-	\+ member(S, U),
+check(T, L, S, visited, ef(F)):-
+	\+ member(S, visited),
 	check(T, L, S, [], F). % check if true in current state S
-check(T, L, S, U, ef(F)) :-
-	\+ member(S, U),
+check(T, L, S, visited, ef(F)) :-
+	\+ member(S, visited),
 	member([S, Z], T), % Fetch list Z of neighbors to S from tranistions T
-	check_exist(T, L, Z, [S|U], F, ef(F)). % Check for all neighbours Z, Add S to recorded states U
+	check_exist(T, L, Z, [S|visited], F, ef(F)). % Check for all neighbours Z, Add S to recorded states visited
 
 % EX F - some next state will satify F
 check(T, L, S, [], ex(F)) :-
@@ -90,12 +90,12 @@ check(T, L, S, [], ex(F)) :-
 
 % Help predicate for A-formulas
 check_all(_,_,[],_,_,_). % All neighbours check
-check_all(T, L, [H|TAIL], U, X, A) :-
-	check(T, L, H, U, A), % True in the head H of the neighbour list
-	check_all(T, L, TAIL, U, X, A). %True in the TAIL of the neighbour list
+check_all(T, L, [H|TAIL], visited, X, A) :-
+	check(T, L, H, visited, A), % True in the head H of the neighbour list
+	check_all(T, L, TAIL, visited, X, A). %True in the TAIL of the neighbour list
 
 % Help predicate for E-formulas
 check_exist(_,_,[],_,_,_):- fail. %Fails if list is empty
-check_exist(T, L, [H|TAIL], U, X, A) :-
-	check(T, L, H, U, A); %True and the head H of the neighbour list
-	check_exist(T, L, TAIL, U, X, A). % or true in the TAIL of the neighbour list
+check_exist(T, L, [H|TAIL], visited, X, A) :-
+	check(T, L, H, visited, A); %True and the head H of the neighbour list
+	check_exist(T, L, TAIL, visited, X, A). % or true in the TAIL of the neighbour list
