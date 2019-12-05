@@ -10,7 +10,7 @@
 
 
 %opening
-\title{Laboration II - Modellprovning för CTL \\ DD1351 Logik för dataloger }
+\title{Laboration III - Modellprovning för CTL \\ DD1351 Logik för dataloger }
 \author{Emil Ståhl}
 
 \begin{document}
@@ -22,7 +22,7 @@
 Denna rapport behandlar implementering och testning av ett kontrollprogram för temporallogik och modellbaserad systemutveckling skrivet i prolog. Indata till programmet är en fil med modellen, sanningstilldelningslistan, starttillståndet samt formeln. Programmet returnerar antingen \texttt{"yes"} eller \texttt{"no"} beroende på om modellen med dess tillstånd och övergångar är korrekt eller ej. Programmet har stöd för samtliga temporala kvantifierare för att uttrycka sanning över sekvenser av valueringar, en komplett lista över dessa återfinns i appendix. 
 
 \section{Generell beskrivning av algoritmen}
-Algoritmen startar i predikatet \texttt{check} med värdena från indata tillsammans med en tom lista som håller reda på vilka tillstånd som har besökts. Syftet med \texttt{check} är att verifiera varje delformel rekursivt. För att göra detta använder \texttt{check} sig av två andra predikat, \texttt{check\_all} och \texttt{check\_exist}, som rekursivt kontrollerar A-formler respektive E-formler. För att upptäcka slingor i modellen skapas en lista  \texttt{visited} som bevarar alla tillstånd som redan undersöks. Varje predikat check börjar därav med att kontrollera om tillståndet  \texttt{S} finns i listan  \texttt{visited}. Om \texttt{S} inte finns i listan så utförs resten av predikatet.
+Algoritmen startar i predikatet \texttt{check} med värdena från indata tillsammans med en tom lista som håller reda på vilka tillstånd som har besökts. Syftet med \texttt{check} är att verifiera varje delformel rekursivt. För att göra detta använder \texttt{check} sig av två andra predikat, \texttt{check\_all} och \texttt{check\_exist}, som rekursivt kontrollerar A-formler respektive E-formler. För att upptäcka slingor i modellen skapas en lista  \texttt{visited} som bevarar alla tillstånd som redan undersöks. Varje predikat \texttt{check} börjar därav med att kontrollera om tillståndet  \texttt{S} finns i listan  \texttt{visited}. Om \texttt{S} inte finns i listan så utförs resten av predikatet.
 
 \section{Modellering}
 Den modell som konstruerats visualiseras med en tillståndsgraf i figur 1. Modellen beskriver en uttagsautomat där en användare initialt möts av en startskärm där en pinkod ska matas in. Om pinkoden är korrekt kan ett valfritt saldo väljas. Om pinkoden är felaktig återgår proceduren till startskärmen. Om det saldo som matats in av användaren är godkänt slutförs uttaget och proceduren avslutas genom att återgå till startskärmen. Användaren kan i alla tillstånd avbryta proceduren.
