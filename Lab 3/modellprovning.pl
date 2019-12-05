@@ -1,6 +1,3 @@
-% For SICStus, uncomment line below: (needed for member/2)
-%:- use_module(library(lists)).
-
 verify(Input) :-
 	see(Input), read(T), read(L), read(S), read(F), seen,
 	check(T, L, S, [], F).
