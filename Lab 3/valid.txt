@@ -1,0 +1,15 @@
+[[s, [v]],
+[v, [s, v, fi, vs]],
+[fi, [s, v]],
+[vs, [s, vs, us]],
+[us, [s]]].
+
+[[s, []],
+[v, [pi]],
+[fi, [pi, n]],
+[vs, [pi, v]],
+[us, [pi, v, gs]]].
+
+s.
+
+ef(and(and(pi,v),gs)).
