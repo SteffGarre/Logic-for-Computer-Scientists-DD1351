@@ -2,7 +2,7 @@
 
 This course gives an introduction to mathematical logic and its use within computer science, including logic programming.
 
-Course contents *
+### Course contents
 
 A. Propositional logic
 
@@ -39,7 +39,7 @@ F. Hoare logic
 - Proof techniques: model checking
 
 
-Intended learning outcomes *
+### Intended learning outcomes
 
 After passing the course, the students should be able to:
 
@@ -49,9 +49,7 @@ specify and prove system properties by means of temporal logic,
 specify and prove program properties by means of Hoare logic,
 apply methods for automatic deduction and carry out simple proofs with model checking,
 apply and explain basic concepts in logic programming: unification, backtracking, intersection, negation and different programming techniques such as generate-test
-in order to
-
-master the proof techniques that are needed in future courses in the education.
+in order to master the proof techniques that are needed in future courses in the education.
 For higher grades, the student should furthermore be able to:
 
 argue for the correctness of a certain proof technique: soundness and completeness,
